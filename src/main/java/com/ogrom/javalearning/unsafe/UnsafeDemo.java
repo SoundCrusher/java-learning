@@ -14,14 +14,14 @@ import cn.hutool.core.thread.ThreadUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * <p>Company: 成都返空汇网络技术有限公司</p>
+ * <p>Company: </p>
  * <p>Description:  </p>
  *
  * @author wanghao
- * @version x.x.x
- * @email "mailto:wanghao@fkhwl.com"
+ * @version 1.0.0
+ * @email "mailto:ogromwang@gmail.com"
  * @date 2021.09.18 13:49
- * @since x.x.x
+ * @since 1.0.0
  */
 @Slf4j
 @Component

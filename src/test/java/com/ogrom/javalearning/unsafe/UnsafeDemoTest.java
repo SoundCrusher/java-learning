@@ -8,7 +8,7 @@ import javax.annotation.Resource;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * <p>Company: 成都返空汇网络技术有限公司</p>
+ * <p>Company: </p>
  * <p>Description:  </p>
  *
  * @author wanghao

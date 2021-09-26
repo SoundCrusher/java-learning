@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author wanghao
  * @version x.x.x
- * @email "mailto:wanghao@fkhwl.com"
+ * @email "mailto:"
  * @date 2021.09.18 14:07
  * @since x.x.x
  */
@@ -30,6 +30,7 @@ class UnsafeDemoTest {
 
     @Test
     void cas() {
+        this.unsafeDemo.cas();
     }
 
     @Test
@@ -50,6 +51,7 @@ class UnsafeDemoTest {
 
     @Test
     void memoryBarrier() {
+        this.unsafeDemo.memoryBarrier();
     }
 
     @Test

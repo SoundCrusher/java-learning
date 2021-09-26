@@ -7,10 +7,14 @@ import sun.misc.Unsafe;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
+import java.util.concurrent.locks.StampedLock;
 
 import javax.annotation.PostConstruct;
 
 import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.ReflectUtil;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,6 +33,9 @@ public class UnsafeDemo implements IUnsafeDemo {
 
     /** Unsafe */
     private Unsafe unsafe;
+
+    private int x = 0;
+    private int y = 0;
 
     /**
      * 有两种手法可以获取 unsafe，不能直接通过静态方法get，如果检查到不是 启动类加载器加载器的，会报安全异常
@@ -85,6 +92,17 @@ public class UnsafeDemo implements IUnsafeDemo {
      */
     @Override
     public void cas() {
+        @Data
+        @AllArgsConstructor
+        class Demo {
+            int x;
+            int y;
+        }
+        Demo demo = new Demo(0, 0);
+        long offset = this.unsafe.objectFieldOffset(ReflectUtil.getField(Demo.class, "x"));
+        log.info("cas前的结果：{}", demo);
+        this.unsafe.compareAndSwapInt(demo, offset, 0, 1);
+        log.info("cas后的结果：{}", demo);
 
     }
 
@@ -135,6 +153,45 @@ public class UnsafeDemo implements IUnsafeDemo {
      */
     @Override
     public void memoryBarrier() {
+        // 内存屏障，禁止 load 操作重排序。屏障前的 load 操作不能被重排序到屏障后，屏障后的
+        // load 操作不能被重排序到屏障前
+        this.unsafe.loadFence();
+        // 内存屏障，禁止 store 操作重排序。屏障前的 store 操作不能被重排序到屏障后，屏障后
+        // 的 store 操作不能被重排序到屏障前
+        this.unsafe.storeFence();
+        // 内存屏障，禁止 load、store 操作重排序
+        this.unsafe.fullFence();
+
+        StampedLock stampedLock = new StampedLock();
+        long stamp = stampedLock.tryOptimisticRead();
+        log.info("获取乐观读锁：{}", stamp);
+
+        int innerX = this.x, innerY = this.y;
+        long l1 = stampedLock.writeLock();
+        try {
+            this.x = 1;
+            this.y = 1;
+        } finally {
+            stampedLock.unlockWrite(l1);
+        }
+        log.info("获取乐观读锁：{}", stampedLock.tryOptimisticRead());
+        // 从主内存中 load 变量
+        // 校验读到的值，是否和主内存中的不一致了
+        // validate方法中 第一行就是 load 屏障，避免了 加载值和validate 的指令重排序
+        if (!stampedLock.validate(stamp)) {
+            long l = stampedLock.readLock();
+            log.info("获取读锁：{}", l);
+            l = stampedLock.readLock();
+            log.info("获取读锁：{}", l);
+            try {
+                // 重新从主内存中 load 变量
+                innerX = this.x;
+                innerY = this.y;
+            } finally {
+                stampedLock.unlockRead(l);
+            }
+        }
+        // 执行操作
 
     }
 
